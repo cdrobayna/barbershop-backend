@@ -1,0 +1,188 @@
+###############################################
+# Diagrama Entidad-Relación
+# Appointment Booking Backend
+###############################################
+
+direction: right
+
+# ─── Estilos ───────────────────────────────
+classes: {
+  entity: {
+    shape: sql_table
+    style: {
+      font-size: 13
+    }
+  }
+  pk: {
+    style.bold: true
+  }
+}
+
+# ─── Entidades ─────────────────────────────
+
+users: {
+  class: entity
+  label: users
+  id: bigint PK {class: pk}
+  name: varchar(255)
+  email: varchar(255) UNIQUE
+  email_verified_at: timestamp nullable
+  password: varchar(255)
+  role: enum(provider, client)
+  phone: varchar(50) nullable
+  remember_token: varchar(100) nullable
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+provider_profiles: {
+  class: entity
+  label: provider_profiles
+  id: bigint PK {class: pk}
+  user_id: bigint FK
+  bio: text nullable
+  photo_url: varchar(500) nullable
+  appointment_duration_minutes: int
+  min_cancel_notice_hours: int
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+weekly_schedule: {
+  class: entity
+  label: weekly_schedule
+  id: bigint PK {class: pk}
+  provider_id: bigint FK
+  day_of_week: tinyint "(0=Sun … 6=Sat)"
+  is_active: boolean
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+work_sessions: {
+  class: entity
+  label: work_sessions "(sesiones por día)"
+  id: bigint PK {class: pk}
+  schedule_id: bigint FK "(weekly_schedule o override)"
+  schedule_type: enum(weekly, override)
+  start_time: time
+  end_time: time
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+schedule_overrides: {
+  class: entity
+  label: schedule_overrides
+  id: bigint PK {class: pk}
+  provider_id: bigint FK
+  date: date
+  is_working: boolean
+  reason: varchar(255) nullable
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+appointments: {
+  class: entity
+  label: appointments
+  id: bigint PK {class: pk}
+  provider_id: bigint FK
+  client_id: bigint FK
+  parent_appointment_id: bigint FK nullable "(reprogramación)"
+  service_type_id: bigint FK nullable "(futuro catálogo)"
+  scheduled_at: timestamp
+  duration_minutes: int
+  party_size: int "(default: 1)"
+  status: enum(pending, confirmed, cancelled, rescheduled, reschedule_requested, completed)
+  notes: text nullable
+  cancelled_by: enum(provider, client) nullable
+  cancelled_at: timestamp nullable
+  reschedule_requested_by: enum(provider, system) nullable
+  reschedule_requested_at: timestamp nullable
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+notification_preferences: {
+  class: entity
+  label: notification_preferences
+  id: bigint PK {class: pk}
+  user_id: bigint FK
+  event_type: varchar(100)
+  channel: varchar(50)
+  enabled: boolean
+  lead_time_hours: int nullable "(solo para reminder)"
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+notifications: {
+  class: entity
+  label: notifications
+  id: uuid PK {class: pk}
+  type: varchar(255)
+  notifiable_type: varchar(255)
+  notifiable_id: bigint
+  data: json
+  read_at: timestamp nullable
+  created_at: timestamp
+  updated_at: timestamp
+}
+
+users -> provider_profiles: "1 tiene 0..1" {
+  source-arrowhead: {
+    shape: none
+  }
+  target-arrowhead: {
+    shape: arrow
+  }
+}
+
+users -> weekly_schedule: "proveedor define" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}
+
+weekly_schedule -> work_sessions: "tiene sesiones" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}
+
+users -> schedule_overrides: "proveedor define" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}
+
+schedule_overrides -> work_sessions: "tiene sesiones (si is_working)" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+  style.stroke-dash: 4
+}
+
+users -> appointments: "proveedor atiende" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}
+
+users -> appointments: "cliente reserva" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+  style.stroke-dash: 4
+}
+
+appointments -> appointments: "reprogramada desde" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+  style.stroke-dash: 4
+}
+
+users -> notification_preferences: "cliente configura" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}
+
+users -> notifications: "recibe" {
+  source-arrowhead.shape: none
+  target-arrowhead.shape: arrow
+}

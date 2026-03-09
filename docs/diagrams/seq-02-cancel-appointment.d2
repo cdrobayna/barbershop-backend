@@ -1,0 +1,37 @@
+# Flujo 2 -- Cancelar Cita (Cliente)
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+client: Cliente
+controller: AppointmentController
+request: CancelAppointmentRequest
+policy: AppointmentPolicy
+appt_svc: AppointmentService
+eloquent: "Eloquent (Models)"
+notification: AppointmentCancelledNotification
+
+client -> controller: "DELETE /api/v1/appointments/{id}"
+controller -> request: "Validacion y authorize() via FormRequest"
+request -> policy: "canCancel(auth()->user(), appointment)"
+policy -> policy: "Verificar client_id == user.id"
+policy -> policy: "Verificar status IN (Pending, Confirmed)"
+policy -> policy: "Verificar antelacion minima\nnow() < scheduled_at - min_cancel_hours"
+policy -> request: "true / AuthorizationException"
+request -> controller: "ok / 403 Forbidden"
+
+controller -> appt_svc: "cancel(appointment, cancelled_by = Client)"
+
+appt_svc -> eloquent: "appointment->update(status = Cancelled,\ncancelled_by, cancelled_at)"
+eloquent -> appt_svc: "Appointment actualizada"
+
+appt_svc -> notification: "client->notify(new AppointmentCancelledNotification(appointment))"
+notification -> eloquent: "NotificationPreference::forUser(client)->get()"
+eloquent -> notification: "preferencias del cliente"
+notification -> notification: "via(): enviar por canales habilitados"
+
+appt_svc -> notification: "provider->notify(new AppointmentCancelledNotification(appointment))"
+notification -> notification: "via(): email + in-app"
+
+appt_svc -> controller: "Appointment"
+controller -> client: "200 OK -- AppointmentResource"

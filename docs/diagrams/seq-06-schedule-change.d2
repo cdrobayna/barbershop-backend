@@ -1,0 +1,42 @@
+# Flujo 6 -- Cambio de Horario con Citas Afectadas
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+provider: Proveedor
+controller: ScheduleController
+request: UpdateWeeklyScheduleRequest
+schedule_svc: ScheduleService
+appt_svc: AppointmentService
+eloquent: "Eloquent (Models)"
+notification: ScheduleChangedNotification
+
+provider -> controller: "PUT /api/v1/schedule/weekly/{day}"
+controller -> request: "Validacion y authorize() via FormRequest"
+request -> request: "Verificar role == Provider"
+request -> controller: "ok / 403 Forbidden"
+
+controller -> schedule_svc: "updateDaySchedule(provider, day_of_week, new_sessions)"
+
+schedule_svc -> eloquent: "WeeklySchedule::upsertForDay(provider, day_of_week)"
+eloquent -> schedule_svc: "WeeklySchedule"
+schedule_svc -> eloquent: "WorkSession::syncForSchedule(schedule, new_sessions)"
+eloquent -> schedule_svc: "sesiones actualizadas"
+
+schedule_svc -> appt_svc: "invalidateAffectedAppointments(provider, day_of_week, new_sessions)"
+
+appt_svc -> eloquent: "Appointment::pendingOrConfirmed()\n->forProvider(provider)\n->forDayOfWeek(day_of_week)\n->future()->get()"
+eloquent -> appt_svc: "citas activas del dia de semana"
+appt_svc -> appt_svc: "Filtrar las que ya no caben\nen las nuevas sesiones"
+
+appt_svc -> eloquent: "Appointment::whereIn(id, affected)->update(\n  status = RescheduleRequested,\n  reschedule_requested_by = System\n)"
+eloquent -> appt_svc: "N filas actualizadas"
+
+appt_svc -> notification: "client->notify(new ScheduleChangedNotification(appointment))\npor cada cita afectada"
+notification -> eloquent: "NotificationPreference::forUser(client)->get()"
+eloquent -> notification: "preferencias del cliente"
+notification -> notification: "via(): enviar por canales habilitados\n(Su cita ya no esta disponible, por favor reprograme)"
+
+appt_svc -> schedule_svc: "affected_count: N"
+schedule_svc -> controller: "WeeklySchedule + affected_count"
+controller -> provider: "200 OK -- ScheduleResource + affected_appointments_count: N"

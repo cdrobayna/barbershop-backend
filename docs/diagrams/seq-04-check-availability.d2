@@ -1,0 +1,33 @@
+# Flujo 4 -- Consultar Disponibilidad
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+client: Cliente
+controller: AvailabilityController
+avail_svc: AvailabilityService
+eloquent: "Eloquent (Models)"
+
+client -> controller: "GET /api/v1/availability?date=YYYY-MM-DD"
+controller -> controller: "Validar autenticacion (auth:sanctum)"
+
+controller -> avail_svc: "getAvailabilityForDate(provider, date)"
+
+avail_svc -> eloquent: "WeeklySchedule::forProvider(provider)\n->whereDay(day_of_week)->with(workSessions)->first()"
+eloquent -> avail_svc: "horario semanal + sesiones del dia"
+
+avail_svc -> eloquent: "ScheduleOverride::forProviderAndDate(provider, date)\n->with(workSessions)->first()"
+eloquent -> avail_svc: "override (si existe)"
+
+avail_svc -> avail_svc: "Resolver horario efectivo:\nsi existe override: usar sus sesiones (o marcar no laborable)\nsi no: usar sesiones del horario semanal"
+
+avail_svc -> avail_svc: "Si is_working = false: retornar dia no laborable"
+
+avail_svc -> eloquent: "Appointment::activeForDate(provider, date)->get()"
+eloquent -> avail_svc: "citas activas del dia"
+
+avail_svc -> avail_svc: "Calcular franjas ocupadas por sesion"
+
+avail_svc -> controller: "is_working: true\nsessions: [\n  (09:00-13:00, busy: [10:00-10:30]),\n  (15:00-19:00, busy: [16:00-16:30])\n]"
+
+controller -> client: "200 OK -- AvailabilityResource"

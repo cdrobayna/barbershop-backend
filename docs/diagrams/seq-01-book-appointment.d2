@@ -1,0 +1,47 @@
+# Flujo 1 -- Reservar Cita (Cliente)
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+client: Cliente
+controller: AppointmentController
+request: StoreAppointmentRequest
+appt_svc: AppointmentService
+avail_svc: AvailabilityService
+eloquent: "Eloquent (Models)"
+notification: AppointmentCreatedNotification
+
+client -> controller: "POST /api/v1/appointments"
+controller -> request: "Validacion automatica via FormRequest\n(scheduled_at, party_size, notes)"
+request -> controller: "validated() / 422 Unprocessable"
+
+controller -> appt_svc: "create(auth()->user(), validated)"
+
+appt_svc -> avail_svc: "checkAvailability(provider, scheduled_at, duration)"
+
+avail_svc -> eloquent: "WeeklySchedule + WorkSession: getEffectiveSchedule(provider, date)"
+eloquent -> avail_svc: "sessions: [(start, end), ...]"
+avail_svc -> eloquent: "ScheduleOverride: findForDate(provider, date)"
+eloquent -> avail_svc: "override (si existe)"
+avail_svc -> avail_svc: "Resolver horario efectivo del dia"
+avail_svc -> avail_svc: "Verificar que la cita cae dentro de una sesion\ny no cruza su limite"
+
+avail_svc -> eloquent: "Appointment::activeForDate(provider, date)->get()"
+eloquent -> avail_svc: "citas activas del dia"
+avail_svc -> avail_svc: "Verificar que no hay solapamiento"
+
+avail_svc -> appt_svc: "ok / throw AppointmentNotAvailableException"
+
+appt_svc -> eloquent: "Appointment::create(provider, client, scheduled_at, duration, party_size, notes)"
+eloquent -> appt_svc: "Appointment (status = Pending)"
+
+appt_svc -> notification: "client->notify(new AppointmentCreatedNotification(appointment))"
+notification -> eloquent: "NotificationPreference::forUser(client)->get()"
+eloquent -> notification: "preferencias del cliente"
+notification -> notification: "via(): enviar por canales habilitados"
+
+appt_svc -> notification: "provider->notify(new AppointmentCreatedNotification(appointment))"
+notification -> notification: "via(): email + in-app"
+
+appt_svc -> controller: "Appointment"
+controller -> client: "201 Created -- AppointmentResource"

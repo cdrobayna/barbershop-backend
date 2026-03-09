@@ -1,0 +1,49 @@
+# Flujo 3 -- Reprogramar Cita (Cliente)
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+client: Cliente
+controller: AppointmentController
+request: RescheduleAppointmentRequest
+policy: AppointmentPolicy
+appt_svc: AppointmentService
+avail_svc: AvailabilityService
+eloquent: "Eloquent (Models)"
+notification: AppointmentRescheduledNotification
+
+client -> controller: "PATCH /api/v1/appointments/{id}/reschedule"
+controller -> request: "Validacion y authorize() via FormRequest"
+request -> policy: "canReschedule(auth()->user(), appointment)"
+policy -> policy: "Verificar client_id == user.id"
+policy -> policy: "Verificar status IN (Pending, Confirmed, RescheduleRequested)"
+policy -> policy: "Si status != RescheduleRequested:\nverificar antelacion minima respecto a cita original"
+policy -> request: "true / AuthorizationException"
+request -> controller: "ok / 403 Forbidden"
+
+controller -> appt_svc: "reschedule(appointment, new_scheduled_at)"
+
+appt_svc -> avail_svc: "checkAvailability(provider, new_scheduled_at, duration,\nexclude: appointment.id)"
+avail_svc -> eloquent: "WeeklySchedule + WorkSession + ScheduleOverride:\ngetEffectiveSchedule(provider, new_date)"
+eloquent -> avail_svc: "sesiones efectivas"
+avail_svc -> eloquent: "Appointment::activeForDate(provider, new_date)\n->where(id != appointment.id)->get()"
+eloquent -> avail_svc: "citas activas del dia"
+avail_svc -> avail_svc: "Verificar sesion y solapamiento"
+avail_svc -> appt_svc: "ok / throw AppointmentNotAvailableException"
+
+appt_svc -> eloquent: "appointment->update(status = Rescheduled)"
+eloquent -> appt_svc: "OK"
+
+appt_svc -> eloquent: "Appointment::create(parent_appointment_id = original.id, ...)"
+eloquent -> appt_svc: "nueva Appointment (status = Pending)"
+
+appt_svc -> notification: "client->notify(new AppointmentRescheduledNotification(original, nueva))"
+notification -> eloquent: "NotificationPreference::forUser(client)->get()"
+eloquent -> notification: "preferencias del cliente"
+notification -> notification: "via(): enviar por canales habilitados"
+
+appt_svc -> notification: "provider->notify(new AppointmentRescheduledNotification(original, nueva))"
+notification -> notification: "via(): email + in-app"
+
+appt_svc -> controller: "nueva Appointment"
+controller -> client: "201 Created -- AppointmentResource"

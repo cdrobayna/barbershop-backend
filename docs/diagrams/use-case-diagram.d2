@@ -1,0 +1,141 @@
+###############################################
+# Diagrama de Casos de Uso del Sistema
+# Appointment Booking Backend
+###############################################
+
+direction: right
+
+title: |md
+  ## Diagrama de Casos de Uso
+  **Appointment Booking Backend**
+| {near: top-center}
+
+# ─── Actores ───────────────────────────────
+
+provider: Proveedor {
+  shape: person
+  style.fill: "#dbeafe"
+}
+
+client: Cliente {
+  shape: person
+  style.fill: "#dcfce7"
+}
+
+system_actor: Sistema {
+  shape: person
+  style.fill: "#fef9c3"
+}
+
+# ─── Frontera del Sistema ──────────────────
+
+system_boundary: Sistema de Gestión de Citas {
+  style: {
+    stroke-dash: 4
+    fill: "#f8fafc"
+  }
+
+  # ── Módulo Autenticación ──
+  auth_module: Autenticación {
+    style.fill: "#f1f5f9"
+
+    uc_register: Registrarse {shape: oval}
+    uc_login: Iniciar sesión {shape: oval}
+    uc_logout: Cerrar sesión {shape: oval}
+  }
+
+  # ── Módulo Horario ──
+  schedule_module: Gestión de Horario {
+    style.fill: "#f1f5f9"
+
+    uc_set_weekly: Definir horario semanal {shape: oval}
+    uc_add_override: Marcar excepción de día {shape: oval}
+    uc_del_override: Eliminar excepción de día {shape: oval}
+    uc_query_avail: Consultar disponibilidad de fechas {shape: oval}
+    uc_set_duration: Configurar duración de cita {shape: oval}
+  }
+
+  # ── Módulo Citas ──
+  appt_module: Gestión de Citas {
+    style.fill: "#f1f5f9"
+
+    uc_book: Reservar cita {shape: oval}
+    uc_view_own: Ver mis citas {shape: oval}
+    uc_cancel_own: Cancelar mi cita {shape: oval}
+    uc_reschedule_own: Reprogramar mi cita {shape: oval}
+    uc_view_all: Ver todas las citas {shape: oval}
+    uc_confirm_appt: Confirmar cita {shape: oval}
+    uc_cancel_any: Cancelar cualquier cita {shape: oval}
+    uc_reschedule_any: Reprogramar cualquier cita {shape: oval}
+    uc_request_reschedule: Solicitar reprogramación al cliente {shape: oval}
+    uc_complete: Marcar cita como completada {shape: oval}
+  }
+
+  # ── Módulo Notificaciones ──
+  notif_module: Notificaciones {
+    style.fill: "#f1f5f9"
+
+    uc_send_notif: Enviar notificación {shape: oval}
+    uc_view_notif: Ver notificaciones {shape: oval}
+    uc_mark_read: Marcar notificación como leída {shape: oval}
+    uc_manage_prefs: Gestionar preferencias de notificación {shape: oval}
+  }
+
+  # ── Módulo Perfil ──
+  profile_module: Perfil {
+    style.fill: "#f1f5f9"
+
+    uc_edit_client_profile: Editar perfil de cliente {shape: oval}
+    uc_edit_provider_profile: Editar perfil de proveedor {shape: oval}
+  }
+
+  # ── Include / Extend internos ──
+  uc_book -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_confirm_appt -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_cancel_own -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_cancel_any -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_reschedule_own -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_reschedule_any -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+  uc_request_reschedule -> uc_send_notif: "<<include>>" {style.stroke-dash: 4}
+
+  uc_book -> uc_query_avail: "<<include>>" {style.stroke-dash: 4}
+  uc_reschedule_own -> uc_query_avail: "<<include>>" {style.stroke-dash: 4}
+  uc_reschedule_any -> uc_query_avail: "<<include>>" {style.stroke-dash: 4}
+}
+
+# ─── Relaciones Actor → Caso de Uso ────────
+
+# Cliente
+client -> system_boundary.auth_module.uc_register
+client -> system_boundary.auth_module.uc_login
+client -> system_boundary.auth_module.uc_logout
+client -> system_boundary.schedule_module.uc_query_avail
+client -> system_boundary.appt_module.uc_book
+client -> system_boundary.appt_module.uc_view_own
+client -> system_boundary.appt_module.uc_cancel_own
+client -> system_boundary.appt_module.uc_reschedule_own
+client -> system_boundary.notif_module.uc_view_notif
+client -> system_boundary.notif_module.uc_mark_read
+client -> system_boundary.notif_module.uc_manage_prefs
+client -> system_boundary.profile_module.uc_edit_client_profile
+
+# Proveedor
+provider -> system_boundary.auth_module.uc_login
+provider -> system_boundary.auth_module.uc_logout
+provider -> system_boundary.schedule_module.uc_set_weekly
+provider -> system_boundary.schedule_module.uc_add_override
+provider -> system_boundary.schedule_module.uc_del_override
+provider -> system_boundary.schedule_module.uc_set_duration
+provider -> system_boundary.appt_module.uc_view_all
+provider -> system_boundary.appt_module.uc_confirm_appt
+provider -> system_boundary.appt_module.uc_cancel_any
+provider -> system_boundary.appt_module.uc_reschedule_any
+provider -> system_boundary.appt_module.uc_request_reschedule
+provider -> system_boundary.appt_module.uc_complete
+provider -> system_boundary.notif_module.uc_view_notif
+provider -> system_boundary.notif_module.uc_mark_read
+provider -> system_boundary.profile_module.uc_edit_provider_profile
+
+# Sistema (actor interno)
+system_actor -> system_boundary.notif_module.uc_send_notif
+system_actor -> system_boundary.schedule_module.uc_query_avail

@@ -1,0 +1,33 @@
+# Flujo 5 -- Solicitar Reprogramacion al Cliente (Proveedor)
+# Appointment Booking Backend
+
+shape: sequence_diagram
+
+provider: Proveedor
+controller: AppointmentController
+request: RequestRescheduleRequest
+policy: AppointmentPolicy
+appt_svc: AppointmentService
+eloquent: "Eloquent (Models)"
+notification: RescheduleRequestedNotification
+
+provider -> controller: "POST /api/v1/appointments/{id}/request-reschedule"
+controller -> request: "Validacion y authorize() via FormRequest"
+request -> policy: "canRequestReschedule(auth()->user(), appointment)"
+policy -> policy: "Verificar role == Provider"
+policy -> policy: "Verificar status IN (Pending, Confirmed)"
+policy -> request: "true / AuthorizationException"
+request -> controller: "ok / 403 Forbidden"
+
+controller -> appt_svc: "requestReschedule(appointment, reason)"
+
+appt_svc -> eloquent: "appointment->update(status = RescheduleRequested,\nreschedule_requested_by = Provider,\nreschedule_requested_at = now())"
+eloquent -> appt_svc: "Appointment actualizada"
+
+appt_svc -> notification: "client->notify(new RescheduleRequestedNotification(appointment))"
+notification -> eloquent: "NotificationPreference::forUser(client)->get()"
+eloquent -> notification: "preferencias del cliente"
+notification -> notification: "via(): enviar por canales habilitados\n(Su cita requiere reprogramacion)"
+
+appt_svc -> controller: "Appointment"
+controller -> provider: "200 OK -- AppointmentResource"
