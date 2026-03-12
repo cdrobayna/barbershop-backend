@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\RescheduleRequestedBy;
 use App\Exceptions\ScheduleConflictException;
+use App\Jobs\ProcessScheduleChangeJob;
 use App\Models\Appointment;
 use App\Models\ScheduleOverride;
 use App\Models\User;
@@ -69,6 +70,11 @@ class ScheduleService
                     $affectedIds,
                     RescheduleRequestedBy::System
                 );
+
+                // Dispatch job to notify affected clients
+                $clientIds = Appointment::whereIn('id', $affectedIds)->pluck('client_id')->all();
+                $nextDate = $this->getNextDateForDayOfWeek($dayOfWeek);
+                ProcessScheduleChangeJob::dispatch($provider->id, $nextDate, $clientIds);
             }
 
             return $schedule->fresh(['workSessions']);
@@ -131,6 +137,10 @@ class ScheduleService
                         $affectedIds,
                         RescheduleRequestedBy::System
                     );
+
+                    // Dispatch job to notify affected clients
+                    $clientIds = Appointment::whereIn('id', $affectedIds)->pluck('client_id')->all();
+                    ProcessScheduleChangeJob::dispatch($provider->id, Carbon::parse($data['date']), $clientIds);
                 }
             }
 
@@ -248,5 +258,24 @@ class ScheduleService
                 );
             }
         }
+    }
+
+    /**
+     * Get the next occurrence of a given day of week.
+     */
+    private function getNextDateForDayOfWeek(int $dayOfWeek): Carbon
+    {
+        $now = Carbon::now();
+        $currentDay = $now->dayOfWeek;
+
+        if ($currentDay === $dayOfWeek) {
+            return $now->copy()->addWeek()->startOfDay();
+        }
+
+        if ($dayOfWeek > $currentDay) {
+            return $now->copy()->next($dayOfWeek)->startOfDay();
+        }
+
+        return $now->copy()->next($dayOfWeek)->startOfDay();
     }
 }

@@ -9,6 +9,11 @@ use App\Enums\UserRole;
 use App\Exceptions\AppointmentActionNotAllowedException;
 use App\Models\Appointment;
 use App\Models\User;
+use App\Notifications\AppointmentCancelledNotification;
+use App\Notifications\AppointmentConfirmedNotification;
+use App\Notifications\AppointmentCreatedNotification;
+use App\Notifications\AppointmentRescheduledNotification;
+use App\Notifications\RescheduleRequestedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +41,7 @@ class AppointmentService
 
         $initialStatus = config('booking.initial_appointment_status', 'pending');
 
-        return Appointment::create([
+        $appointment = Appointment::create([
             'provider_id' => $provider->id,
             'client_id' => $client->id,
             'scheduled_at' => $start,
@@ -45,6 +50,12 @@ class AppointmentService
             'status' => $initialStatus,
             'notes' => $data['notes'] ?? null,
         ]);
+
+        // Notify both client and provider
+        $client->notify(new AppointmentCreatedNotification($appointment));
+        $provider->notify(new AppointmentCreatedNotification($appointment));
+
+        return $appointment;
     }
 
     /**
@@ -59,8 +70,12 @@ class AppointmentService
         }
 
         $appointment->update(['status' => AppointmentStatus::Confirmed]);
+        $appointment = $appointment->fresh(['client']);
 
-        return $appointment->fresh();
+        // Notify client
+        $appointment->client->notify(new AppointmentConfirmedNotification($appointment));
+
+        return $appointment;
     }
 
     /**
@@ -80,13 +95,21 @@ class AppointmentService
             $this->enforceMinimumNotice($appointment, $actor);
         }
 
+        $cancelledBy = $actor->isProvider() ? CancelledBy::Provider : CancelledBy::Client;
+
         $appointment->update([
             'status' => AppointmentStatus::Cancelled,
-            'cancelled_by' => $actor->isProvider() ? CancelledBy::Provider : CancelledBy::Client,
+            'cancelled_by' => $cancelledBy,
             'cancelled_at' => now(),
         ]);
 
-        return $appointment->fresh();
+        $appointment = $appointment->fresh(['client', 'provider']);
+
+        // Notify the other party (not the actor)
+        $otherParty = $actor->isProvider() ? $appointment->client : $appointment->provider;
+        $otherParty->notify(new AppointmentCancelledNotification($appointment, $cancelledBy->value));
+
+        return $appointment;
     }
 
     /**
@@ -123,9 +146,15 @@ class AppointmentService
         $this->availabilityService->isSlotAvailable($provider, $newStart, $duration, $appointment->id);
 
         return DB::transaction(function () use ($appointment, $newStart, $duration, $partySize, $newData, $provider) {
+            $appointment->load(['client']);
+            
+            // Store old values before updating
+            $oldId = $appointment->id;
+            $oldScheduledAt = clone $appointment->scheduled_at;
+            
             $appointment->update(['status' => AppointmentStatus::Rescheduled]);
 
-            return Appointment::create([
+            $newAppointment = Appointment::create([
                 'provider_id' => $provider->id,
                 'client_id' => $appointment->client_id,
                 'parent_appointment_id' => $appointment->id,
@@ -135,6 +164,11 @@ class AppointmentService
                 'status' => config('booking.initial_appointment_status', 'pending'),
                 'notes' => $newData['notes'] ?? $appointment->notes,
             ]);
+            
+            $appointment->client->notify(new AppointmentRescheduledNotification($oldId, $oldScheduledAt, $newAppointment));
+            $provider->notify(new AppointmentRescheduledNotification($oldId, $oldScheduledAt, $newAppointment));
+
+            return $newAppointment;
         });
     }
 
@@ -159,7 +193,12 @@ class AppointmentService
             'reschedule_requested_at' => now(),
         ]);
 
-        return $appointment->fresh();
+        $appointment = $appointment->fresh(['client']);
+
+        // Notify client
+        $appointment->client->notify(new RescheduleRequestedNotification($appointment));
+
+        return $appointment;
     }
 
     /**

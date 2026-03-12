@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,13 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
 
     // Availability — accessible to both clients and providers
     Route::get('/availability', [AvailabilityController::class, 'show'])->name('api.v1.availability.show');
+
+    // Notifications — accessible to both clients and providers
+    Route::prefix('notifications')->name('api.v1.notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('markAsRead');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+    });
 
     // Appointments
     Route::prefix('appointments')->name('api.v1.appointments.')->group(function () {

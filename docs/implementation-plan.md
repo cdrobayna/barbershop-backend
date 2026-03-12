@@ -30,7 +30,7 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 - [x] **f2-requests** — `RegisterUserRequest` (name, email unique, phone, password min:8 confirmed), `LoginRequest`
 - [x] **f2-resource** — `UserResource` (id, name, email, phone, role)
 - [x] **f2-auth** — `AuthController` con `register()`, `login()`, `logout()`. Rutas `POST /api/v1/auth/register|login|logout`
-- [x] **f2-tests** — Registro exitoso/fallido, login correcto/fallido, logout (token invalidado)
+- [x] **f2-tests** — Registro exitoso/fallido, login correcto/fallido, logout (token invalidado) (13 tests)
 
 ---
 
@@ -38,9 +38,9 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 
 - [x] **f3-resources** — `WeeklyScheduleResource`, `WorkSessionResource`, `ScheduleOverrideResource`
 - [x] **f3-requests** — `UpdateWeeklyDayRequest` (is_active + sessions[] sin solapamiento), `StoreScheduleOverrideRequest`, `UpdateScheduleOverrideRequest`
-- [x] **f3-service** — `ScheduleService`: `getWeeklySchedule()`, `updateDay()` (upsert + sync + detecta afectadas), `getOverrides()`, `createOverride()`, `updateOverride()`, `deleteOverride()`
+- [x] **f3-service** — `ScheduleService`: `getWeeklySchedule()`, `updateDay()` (upsert + sync + detecta afectadas), `getOverrides()`, `createOverride()`, `updateOverride()`, `deleteOverride()`. Integrado con sistema de notificaciones para cambios que afectan citas.
 - [x] **f3-controller** — `ScheduleController` con 6 rutas bajo `middleware role:provider`
-- [x] **f3-tests** — CRUD horario semanal, validación sesiones solapadas, CRUD overrides
+- [x] **f3-tests** — CRUD horario semanal, validación sesiones solapadas, CRUD overrides (20 tests)
 
 ---
 
@@ -51,27 +51,27 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 - [x] **f4-resource** — `AvailabilityResource` (is_working, sessions[] con occupied_slots[])
 - [x] **f4-service** — `AvailabilityService`: `getEffectiveScheduleForDate()`, `getOccupiedSlots()`, `getAvailabilityForDate()`, `isSlotAvailable()` con las 5 reglas de RF-AVAIL-02 + `excludeAppointmentId`
 - [x] **f4-controller** — `AvailabilityController`, `GET /api/v1/availability?date=YYYY-MM-DD` (client + provider)
-- [x] **f4-tests** — Día no laborable, override off/on, slot libre/ocupado, solapamiento exacto, cruce entre sesiones, party_size×duración, exclusión cita propia
+- [x] **f4-tests** — Día no laborable, override off/on, slot libre/ocupado, solapamiento exacto, cruce entre sesiones, party_size×duración, exclusión cita propia (15 tests)
 
 ---
 
 ## Fase 5 — Citas (RF-APPT)
 
-- [ ] **f5-policy** — `AppointmentPolicy`: `view`, `cancel`, `reschedule`, `requestReschedule`, `confirm`, `complete`
-- [ ] **f5-resources** — `AppointmentResource`, `AppointmentCollection`
-- [ ] **f5-requests** — `StoreAppointmentRequest`, `CancelAppointmentRequest`, `RescheduleAppointmentRequest`, `RequestRescheduleRequest`, `ConfirmAppointmentRequest`, `CompleteAppointmentRequest`
-- [ ] **f5-service** — `AppointmentService`: `create()`, `confirm()`, `cancel()` (notice), `reschedule()` (con/sin notice según estado), `requestReschedule()`, `complete()`, `markAffectedAsRescheduleRequested()`
-- [ ] **f5-controller** — `AppointmentController` con 5 rutas cliente + 6 rutas proveedor
-- [ ] **f5-tests** — Ciclo de vida completo, cancelación con/sin notice, reprogramación (estados válidos/inválidos), requestReschedule (slot liberado), aislamiento entre roles
+- [x] **f5-policy** — `AppointmentPolicy`: `view`, `cancel`, `reschedule`, `requestReschedule`, `confirm`, `complete`
+- [x] **f5-resources** — `AppointmentResource`, `AppointmentCollection`
+- [x] **f5-requests** — `StoreAppointmentRequest`, `RescheduleAppointmentRequest`
+- [x] **f5-service** — `AppointmentService`: `create()`, `confirm()`, `cancel()` (notice), `reschedule()` (con/sin notice según estado), `requestReschedule()`, `complete()`, `markAffectedAsRescheduleRequested()`. Integrado con sistema de notificaciones.
+- [x] **f5-controller** — `AppointmentController` con 8 métodos: index, show, store, cancel, reschedule, confirm, complete, requestReschedule
+- [x] **f5-tests** — Ciclo de vida completo, cancelación con/sin notice, reprogramación (estados válidos/inválidos), requestReschedule (slot liberado), aislamiento entre roles (30 tests)
 
 ---
 
 ## Fase 6 — Notificaciones (RF-NOTIF)
 
-- [ ] **f6-notifs** — 7 clases en `app/Notifications/`: `AppointmentCreatedNotification`, `AppointmentConfirmedNotification`, `AppointmentCancelledNotification`, `AppointmentRescheduledNotification`, `RescheduleRequestedNotification`, `AppointmentReminderNotification`, `ScheduleChangedNotification`. Cada una: `via()` consulta `NotificationPreference::isEnabled()`, `toMail()`, `toArray()`
-- [ ] **f6-jobs** — `SendAppointmentReminderJob` (scheduled, consulta lead_time por cliente) + `ProcessScheduleChangeJob` (queued, bulk update + notifica). Programar reminder en `bootstrap/app.php`
-- [ ] **f6-controller** — `NotificationController`: `GET /api/v1/notifications`, `POST /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`
-- [ ] **f6-tests** — `NotificationPreference::isEnabled` con/sin preferencia (default=enabled), despacho al crear cita, omitida si desactivada
+- [x] **f6-notifs** — 7 clases en `app/Notifications/`: `AppointmentCreatedNotification`, `AppointmentConfirmedNotification`, `AppointmentCancelledNotification`, `AppointmentRescheduledNotification`, `RescheduleRequestedNotification`, `AppointmentReminderNotification`, `ScheduleChangedNotification`. Cada una: `via()` consulta `NotificationPreference::isEnabled()`, `toMail()`, `toArray()`. Implementan `ShouldQueue`.
+- [x] **f6-jobs** — `SendAppointmentReminderJob` (scheduled cada 5 min en `routes/console.php`) + `ProcessScheduleChangeJob` (queued, agrupa clientes afectados por cambio de horario)
+- [x] **f6-controller** — `NotificationController`: `GET /api/v1/notifications` (unread), `POST /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`
+- [x] **f6-tests** — `NotificationPreference::isEnabled` con/sin preferencia (opt-out model), despacho al crear cita, omitida si desactivada, CRUD notificaciones, reminder lead time (10 tests)
 
 ---
 
@@ -86,13 +86,32 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 
 ## Progreso
 
-| Fase | Tareas | Completadas |
-|---|---|---|
-| Fase 1 — Foundation | 8 | 8 ✅ |
-| Fase 2 — Auth | 4 | 0 |
-| Fase 3 — Schedule | 5 | 0 |
-| Fase 4 — Availability | 4 | 0 |
-| Fase 5 — Appointments | 6 | 0 |
-| Fase 6 — Notifications | 4 | 0 |
-| Fase 7 — Profile | 4 | 0 |
-| **Total** | **35** | **0** |
+| Fase | Tareas | Completadas | Tests |
+|---|---|---|---|
+| Fase 1 — Foundation | 8 | 8 ✅ | - |
+| Fase 2 — Auth | 4 | 4 ✅ | 13 |
+| Fase 3 — Schedule | 5 | 5 ✅ | 20 |
+| Fase 4 — Availability | 4 | 4 ✅ | 15 |
+| Fase 5 — Appointments | 6 | 6 ✅ | 30 |
+| Fase 6 — Notifications | 4 | 4 ✅ | 10 |
+| Fase 7 — Profile | 4 | 0 | - |
+| **Total** | **35** | **31** | **88** |
+
+---
+
+## Estado Actual
+
+**Completado: Fases 1-6** (31/35 tareas, 90 tests passing)
+
+- ✅ Foundation — Config, enums, migrations, models, exceptions, services
+- ✅ Auth — Sanctum registration/login/logout
+- ✅ Schedule — Weekly schedules + overrides con detección automática de citas afectadas
+- ✅ Availability — Lógica de slots con 5 reglas de negocio, soporte para party_size y exclusión
+- ✅ Appointments — Ciclo completo: crear, confirmar, cancelar, reprogramar, solicitar reprogramación, completar
+- ✅ Notifications — 7 tipos de notificaciones (mail + in-app), 2 jobs, opt-out model, integrado en services
+
+**Pendiente: Fase 7** (4 tareas)
+
+- ProfileController para cliente y proveedor
+- Actualización de perfil, contraseña, preferencias de notificación
+- Gestión de duración por defecto y notice mínima del provider
