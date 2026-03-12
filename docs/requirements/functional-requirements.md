@@ -199,6 +199,7 @@ Las notificaciones se envían al **cliente** y/o al **proveedor** ante los sigui
 - Ejemplo: un cliente puede activar el recordatorio por email pero desactivarlo in-app, o desactivar completamente la notificación de confirmación.
 - Las preferencias se gestionan por combinación `(event_type, channel)`.
 - Si un cliente no ha configurado una preferencia, se aplica la configuración por defecto del sistema (todos los canales activados para todos los eventos).
+- **Modelo opt-out:** la ausencia de un registro de preferencia equivale a canal habilitado. La creación explícita de un registro con `enabled = false` es la única forma de desactivar un canal. Esto simplifica el onboarding (sin necesidad de crear registros de preferencia para todos los clientes nuevos).
 
 ### RF-NOTIF-05 · Antelación del recordatorio (Cliente)
 - Cada cliente puede configurar el tiempo de antelación con el que quiere recibir el recordatorio de su cita (en horas).

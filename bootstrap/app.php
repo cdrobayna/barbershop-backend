@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,19 +23,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $domainExceptions = [
-            AppointmentNotAvailableException::class,
-            AppointmentActionNotAllowedException::class,
-            ScheduleConflictException::class,
-        ];
+        $renderDomain = static function (Request $request, \Exception $e): JsonResponse {
+            return response()->json(['message' => $e->getMessage()], 422);
+        };
 
-        foreach ($domainExceptions as $exceptionClass) {
-            $exceptions->render(function ($e, $request) use ($exceptionClass): ?JsonResponse {
-                if ($e instanceof $exceptionClass && $request->expectsJson()) {
-                    return response()->json(['message' => $e->getMessage()], 422);
-                }
+        $exceptions->render(function (AppointmentNotAvailableException $e, Request $request) use ($renderDomain): JsonResponse {
+            return $renderDomain($request, $e);
+        });
 
-                return null;
-            });
-        }
+        $exceptions->render(function (AppointmentActionNotAllowedException $e, Request $request) use ($renderDomain): JsonResponse {
+            return $renderDomain($request, $e);
+        });
+
+        $exceptions->render(function (ScheduleConflictException $e, Request $request) use ($renderDomain): JsonResponse {
+            return $renderDomain($request, $e);
+        });
     })->create();

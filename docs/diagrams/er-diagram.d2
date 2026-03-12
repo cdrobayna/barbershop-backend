@@ -1,6 +1,14 @@
 ###############################################
 # Diagrama Entidad-Relación
 # Appointment Booking Backend
+#
+# Notas de implementación:
+# - Las columnas de tipo enum se implementan como string en las migraciones.
+#   Los valores válidos se controlan via backed enums de PHP y casts de Eloquent.
+# - service_type_id en appointments está reservado para v2 (catálogo de servicios).
+#   No existe en la migración actual.
+# - work_sessions usa relación polimórfica: schedule_type = 'weekly' | 'override'
+#   (valores cortos registrados en el morph map de AppServiceProvider).
 ###############################################
 
 direction: right

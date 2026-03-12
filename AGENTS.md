@@ -42,7 +42,14 @@ app/
 - Return Eloquent models/collections or throw domain exceptions.
 - No HTTP logic (`Request`, `Response`, `abort()`) inside Services.
 - Register bindings in `AppServiceProvider`.
-- Domain services: `AvailabilityService`, `AppointmentService`, `ScheduleService`.
+- Wrap multi-table operations in `DB::transaction()`.
+- Domain services and their dependency order: `ScheduleService → AppointmentService → AvailabilityService`.
+
+#### Service method signatures (implemented)
+- `AvailabilityService::isSlotAvailable(User $provider, Carbon $start, int $durationMinutes, ?int $excludeId): bool`
+- `AppointmentService::create(User $client, User $provider, array $data): Appointment`
+- `AppointmentService::markAffectedAsRescheduleRequested(array $ids, RescheduleRequestedBy $by): int`
+- `ScheduleService::updateDay(User $provider, int $dayOfWeek, bool $isActive, array $sessions): WeeklySchedule`
 
 ### Models (`app/Models/`)
 - Eloquent relationships with return type hints.
@@ -92,17 +99,54 @@ app/
 ## Domain Enums
 
 - `AppointmentStatus`: `Pending`, `Confirmed`, `Cancelled`, `Rescheduled`, `RescheduleRequested`, `Completed`
+  - `isActive()` → true for Pending, Confirmed, RescheduleRequested
+  - `blocksAvailability()` → true for Pending, Confirmed only (RescheduleRequested does NOT block slots)
+  - `canBeRescheduledBy(UserRole)` → validates allowed reschedule transitions per role
 - `UserRole`: `Provider`, `Client`
 - `RescheduleRequestedBy`: `Provider`, `System`
 - `CancelledBy`: `Provider`, `Client`
 - `NotificationEventType`: `AppointmentCreated`, `AppointmentConfirmed`, `AppointmentCancelled`, `AppointmentRescheduled`, `RescheduleRequested`, `AppointmentReminder`, `ScheduleChanged`
-- `NotificationChannel`: `Email`, `InApp`
+- `NotificationChannel`: `Email` (`'mail'`), `InApp` (`'database'`) — values are Laravel driver names
 
 ## Authentication
 
-- **Laravel Sanctum** (Bearer tokens).
+- **Laravel Sanctum** (Bearer tokens, installed via `php artisan install:api`).
 - All protected routes use `auth:sanctum` middleware.
-- Role enforcement via Gate or `EnsureUserHasRole` middleware.
+- Role enforcement via `EnsureUserHasRole` middleware, alias `role`. Usage: `->middleware('role:provider')`.
+
+## Database
+
+- **PostgreSQL only**. Some queries use PostgreSQL-specific functions (e.g., `EXTRACT(DOW FROM scheduled_at)`).
+
+## Polymorphic Morph Map
+
+`WorkSession` is polymorphic. Morph map registered in `AppServiceProvider::boot()`:
+- `'users'` → `User::class` (required for Sanctum's `tokenable` polymorphic relation)
+- `'weekly'` → `WeeklySchedule::class`
+- `'override'` → `ScheduleOverride::class`
+
+**Always use these short keys** — never store full class names.
+
+## Configuration — `config/booking.php`
+
+| Key | Default | Purpose |
+|---|---|---|
+| `booking.default_appointment_duration_minutes` | `30` | Base duration per person |
+| `booking.default_reminder_hours` | `24` | Reminder lead time if client hasn't set one |
+| `booking.default_min_cancel_notice_hours` | `2` | Min cancellation notice if provider hasn't set one |
+| `booking.initial_appointment_status` | `'pending'` | Status for newly created appointments |
+
+## Domain Exceptions → HTTP Response
+
+Domain exceptions in `app/Exceptions/` are caught in `bootstrap/app.php` and rendered as:
+```json
+{"message": "..."}  // HTTP 422
+```
+Only for requests with `Accept: application/json`.
+
+## Notification Preferences
+
+`NotificationPreference` uses an **opt-out model**: if no record exists for a `(user, event, channel)` combination, the channel is considered **enabled**. Use `NotificationPreference::isEnabled($user, $event, $channel)` to check.
 
 ## API Routing
 

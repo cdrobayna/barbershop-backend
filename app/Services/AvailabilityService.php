@@ -75,7 +75,7 @@ class AvailabilityService
     /**
      * Full availability response for a date: effective schedule + occupied slots per session.
      */
-    public function getAvailabilityForDate(User $provider, Carbon $date): array
+    public function getAvailabilityForDate(User $provider, Carbon $date, ?int $excludeAppointmentId = null): array
     {
         $effective = $this->getEffectiveScheduleForDate($provider, $date);
 
@@ -83,11 +83,11 @@ class AvailabilityService
             return ['is_working' => false, 'sessions' => []];
         }
 
-        $occupiedSlots = $this->getOccupiedSlots($provider, $date);
+        $occupiedSlots = $this->getOccupiedSlots($provider, $date, $excludeAppointmentId);
 
-        $sessions = $effective['sessions']->map(function ($session) use ($occupiedSlots) {
-            $sessionStart = Carbon::createFromTimeString($session->start_time);
-            $sessionEnd = Carbon::createFromTimeString($session->end_time);
+        $sessions = $effective['sessions']->map(function ($session) use ($occupiedSlots, $date) {
+            $sessionStart = Carbon::createFromTimeString($session->start_time)->setDateFrom($date);
+            $sessionEnd = Carbon::createFromTimeString($session->end_time)->setDateFrom($date);
 
             $busy = array_filter($occupiedSlots, function ($slot) use ($sessionStart, $sessionEnd) {
                 return $slot['start']->lt($sessionEnd) && $slot['end']->gt($sessionStart);

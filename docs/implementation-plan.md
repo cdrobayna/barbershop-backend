@@ -27,20 +27,20 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 
 ## Fase 2 — Autenticación (RF-AUTH)
 
-- [ ] **f2-requests** — `RegisterUserRequest` (name, email unique, phone, password min:8 confirmed), `LoginRequest`
-- [ ] **f2-resource** — `UserResource` (id, name, email, phone, role)
-- [ ] **f2-auth** — `AuthController` con `register()`, `login()`, `logout()`. Rutas `POST /api/v1/auth/register|login|logout`
-- [ ] **f2-tests** — Registro exitoso/fallido, login correcto/fallido, logout (token invalidado)
+- [x] **f2-requests** — `RegisterUserRequest` (name, email unique, phone, password min:8 confirmed), `LoginRequest`
+- [x] **f2-resource** — `UserResource` (id, name, email, phone, role)
+- [x] **f2-auth** — `AuthController` con `register()`, `login()`, `logout()`. Rutas `POST /api/v1/auth/register|login|logout`
+- [x] **f2-tests** — Registro exitoso/fallido, login correcto/fallido, logout (token invalidado)
 
 ---
 
 ## Fase 3 — Gestión de Horario (RF-SCHEDULE)
 
-- [ ] **f3-resources** — `WeeklyScheduleResource`, `WorkSessionResource`, `ScheduleOverrideResource`
-- [ ] **f3-requests** — `UpdateWeeklyDayRequest` (is_active + sessions[] sin solapamiento), `StoreScheduleOverrideRequest`, `UpdateScheduleOverrideRequest`
-- [ ] **f3-service** — `ScheduleService`: `getWeeklySchedule()`, `updateDay()` (upsert + sync + detecta afectadas), `getOverrides()`, `createOverride()`, `updateOverride()`, `deleteOverride()`
-- [ ] **f3-controller** — `ScheduleController` con 6 rutas bajo `middleware role:provider`
-- [ ] **f3-tests** — CRUD horario semanal, validación sesiones solapadas, CRUD overrides
+- [x] **f3-resources** — `WeeklyScheduleResource`, `WorkSessionResource`, `ScheduleOverrideResource`
+- [x] **f3-requests** — `UpdateWeeklyDayRequest` (is_active + sessions[] sin solapamiento), `StoreScheduleOverrideRequest`, `UpdateScheduleOverrideRequest`
+- [x] **f3-service** — `ScheduleService`: `getWeeklySchedule()`, `updateDay()` (upsert + sync + detecta afectadas), `getOverrides()`, `createOverride()`, `updateOverride()`, `deleteOverride()`
+- [x] **f3-controller** — `ScheduleController` con 6 rutas bajo `middleware role:provider`
+- [x] **f3-tests** — CRUD horario semanal, validación sesiones solapadas, CRUD overrides
 
 ---
 
@@ -48,10 +48,10 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 
 *Core del negocio — lógica más crítica del sistema.*
 
-- [ ] **f4-resource** — `AvailabilityResource` (is_working, sessions[] con occupied_slots[])
-- [ ] **f4-service** — `AvailabilityService`: `getEffectiveScheduleForDate()`, `getOccupiedSlots()`, `getAvailabilityForDate()`, `isSlotAvailable()` con las 5 reglas de RF-AVAIL-02 + `excludeAppointmentId`
-- [ ] **f4-controller** — `AvailabilityController`, `GET /api/v1/availability?date=YYYY-MM-DD` (client + provider)
-- [ ] **f4-tests** — Día no laborable, override off/on, slot libre/ocupado, solapamiento exacto, cruce entre sesiones, party_size×duración, exclusión cita propia
+- [x] **f4-resource** — `AvailabilityResource` (is_working, sessions[] con occupied_slots[])
+- [x] **f4-service** — `AvailabilityService`: `getEffectiveScheduleForDate()`, `getOccupiedSlots()`, `getAvailabilityForDate()`, `isSlotAvailable()` con las 5 reglas de RF-AVAIL-02 + `excludeAppointmentId`
+- [x] **f4-controller** — `AvailabilityController`, `GET /api/v1/availability?date=YYYY-MM-DD` (client + provider)
+- [x] **f4-tests** — Día no laborable, override off/on, slot libre/ocupado, solapamiento exacto, cruce entre sesiones, party_size×duración, exclusión cita propia
 
 ---
 

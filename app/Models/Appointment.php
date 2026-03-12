@@ -6,12 +6,15 @@ use App\Enums\AppointmentStatus;
 use App\Enums\CancelledBy;
 use App\Enums\RescheduleRequestedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Appointment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'provider_id',
         'client_id',
@@ -114,7 +117,12 @@ class Appointment extends Model
 
     public function scopeForDayOfWeek(Builder $query, int $dayOfWeek): Builder
     {
-        // PostgreSQL: DOW returns 0=Sunday, 6=Saturday
+        // PostgreSQL: EXTRACT(DOW) — 0=Sunday, 6=Saturday
+        // SQLite:     strftime('%w') — same convention, used for tests
+        if ($query->getConnection()->getDriverName() === 'sqlite') {
+            return $query->whereRaw("CAST(strftime('%w', datetime(scheduled_at)) AS INTEGER) = ?", [$dayOfWeek]);
+        }
+
         return $query->whereRaw('EXTRACT(DOW FROM scheduled_at) = ?', [$dayOfWeek]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\ScheduleOverride;
+use App\Models\User;
 use App\Models\WeeklySchedule;
 use App\Services\AppointmentService;
 use App\Services\AvailabilityService;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Polymorphic morph map for WorkSession schedule relationship
         Relation::enforceMorphMap([
+            'users' => User::class,
             'weekly' => WeeklySchedule::class,
             'override' => ScheduleOverride::class,
         ]);
