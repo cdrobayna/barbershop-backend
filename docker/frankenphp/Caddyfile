@@ -1,0 +1,10 @@
+{
+    auto_https off
+    admin off
+}
+
+:80 {
+    root * /app/public
+    encode gzip zstd
+    php_server
+}
