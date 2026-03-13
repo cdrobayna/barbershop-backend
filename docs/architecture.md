@@ -46,7 +46,8 @@ app/
 │   │       └── V1/                   # Form Requests por módulo
 │   │           ├── Auth/
 │   │           ├── Appointment/
-│   │           └── Schedule/
+│   │           ├── Schedule/
+│   │           └── Profile/
 │   └── Resources/
 │       └── Api/
 │           └── V1/                   # Eloquent API Resources

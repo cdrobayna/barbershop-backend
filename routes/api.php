@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,8 +50,22 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         });
     });
 
+    // Client profile and preferences
+    Route::middleware('role:client')->prefix('profile')->name('api.v1.profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'showClientProfile'])->name('show');
+        Route::put('/', [ProfileController::class, 'updateClientProfile'])->name('update');
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
+        Route::get('/notification-preferences', [ProfileController::class, 'getNotificationPreferences'])->name('notificationPreferences.show');
+        Route::put('/notification-preferences', [ProfileController::class, 'updateNotificationPreferences'])->name('notificationPreferences.update');
+    });
+
     // ── Provider-only routes ─────────────────────────────────────────────────
     Route::middleware('role:provider')->group(function () {
+        Route::prefix('provider/profile')->name('api.v1.provider.profile.')->group(function () {
+            Route::get('/', [ProfileController::class, 'showProviderProfile'])->name('show');
+            Route::put('/', [ProfileController::class, 'updateProviderProfile'])->name('update');
+        });
+
         // Weekly schedule
         Route::prefix('schedule')->name('api.v1.schedule.')->group(function () {
             Route::get('/', [ScheduleController::class, 'index'])->name('index');

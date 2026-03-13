@@ -77,10 +77,10 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 
 ## Fase 7 — Perfiles y Preferencias (RF-PROFILE)
 
-- [ ] **f7-resources** — `ProviderProfileResource`
-- [ ] **f7-requests** — `UpdateClientProfileRequest`, `UpdatePasswordRequest`, `UpdateNotificationPreferencesRequest`, `UpdateProviderProfileRequest`
-- [ ] **f7-profile** — `ProfileController`: cliente (GET/PUT perfil, PUT password, GET/PUT preferencias), proveedor (GET/PUT perfil profesional + duración + notice mínima)
-- [ ] **f7-tests** — Actualización perfil, cambio contraseña, guardar/actualizar preferencias, antelación de recordatorio
+- [x] **f7-resources** — `ProviderProfileResource`
+- [x] **f7-requests** — `UpdateClientProfileRequest`, `UpdatePasswordRequest`, `UpdateNotificationPreferencesRequest`, `UpdateProviderProfileRequest`
+- [x] **f7-profile** — `ProfileController`: cliente (GET/PUT perfil, PUT password, GET/PUT preferencias), proveedor (GET/PUT perfil profesional + duración + notice mínima)
+- [x] **f7-tests** — Actualización perfil, cambio contraseña, guardar/actualizar preferencias, antelación de recordatorio (8 tests)
 
 ---
 
@@ -94,14 +94,14 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 | Fase 4 — Availability | 4 | 4 ✅ | 15 |
 | Fase 5 — Appointments | 6 | 6 ✅ | 30 |
 | Fase 6 — Notifications | 4 | 4 ✅ | 10 |
-| Fase 7 — Profile | 4 | 0 | - |
-| **Total** | **35** | **31** | **88** |
+| Fase 7 — Profile | 4 | 4 ✅ | 8 |
+| **Total** | **35** | **35** | **96** |
 
 ---
 
 ## Estado Actual
 
-**Completado: Fases 1-6** (31/35 tareas, 90 tests passing)
+**Completado: Fases 1-7** (35/35 tareas, 98 tests passing)
 
 - ✅ Foundation — Config, enums, migrations, models, exceptions, services
 - ✅ Auth — Sanctum registration/login/logout
@@ -109,9 +109,4 @@ Laravel 12.53 · PHP 8.5.3 · PostgreSQL · Sanctum · Pest
 - ✅ Availability — Lógica de slots con 5 reglas de negocio, soporte para party_size y exclusión
 - ✅ Appointments — Ciclo completo: crear, confirmar, cancelar, reprogramar, solicitar reprogramación, completar
 - ✅ Notifications — 7 tipos de notificaciones (mail + in-app), 2 jobs, opt-out model, integrado en services
-
-**Pendiente: Fase 7** (4 tareas)
-
-- ProfileController para cliente y proveedor
-- Actualización de perfil, contraseña, preferencias de notificación
-- Gestión de duración por defecto y notice mínima del provider
+- ✅ Profile — Gestión de perfil cliente/proveedor, contraseña, preferencias de notificación y antelación de recordatorio
