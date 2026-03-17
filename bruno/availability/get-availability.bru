@@ -1,0 +1,21 @@
+meta {
+  name: Get Availability
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/availability?date=2026-03-17&provider_id={{providerId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  date: 2026-03-17
+  provider_id: {{providerId}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

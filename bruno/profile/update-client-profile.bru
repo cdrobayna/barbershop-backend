@@ -1,0 +1,25 @@
+meta {
+  name: Update Client Profile
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/v1/profile
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Client Updated",
+    "email": "client.updated@example.com",
+    "phone": "+5355599999"
+  }
+}

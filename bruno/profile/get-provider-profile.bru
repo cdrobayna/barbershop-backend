@@ -1,0 +1,16 @@
+meta {
+  name: Get Provider Profile
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/provider/profile
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

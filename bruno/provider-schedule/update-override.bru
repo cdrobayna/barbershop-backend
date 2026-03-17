@@ -1,0 +1,30 @@
+meta {
+  name: Update Override
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/v1/schedule/overrides/{{overrideId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "is_working": true,
+    "reason": "Cambio de disponibilidad",
+    "sessions": [
+      {
+        "start_time": "10:00",
+        "end_time": "14:00"
+      }
+    ]
+  }
+}

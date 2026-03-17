@@ -75,3 +75,6 @@ docker compose down -v
 - Usar `http://localhost:8000/api/v1` como base URL.
 - El backend requiere autenticación con Bearer token en rutas protegidas.
 - Los correos de prueba (confirmaciones, recordatorios, etc.) se ven en Mailpit UI.
+- Se incluye colección Bruno en `bruno/` para explorar endpoints por módulos.
+- Guía rápida de Bruno: `bruno/README.md`.
+- Datos demo compatibles con Bruno: `php artisan db:seed`.

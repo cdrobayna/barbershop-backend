@@ -1,0 +1,23 @@
+meta {
+  name: Reschedule Appointment
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/appointments/{{appointmentId}}/reschedule
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "scheduled_at": "2030-01-21T11:30:00-05:00"
+  }
+}

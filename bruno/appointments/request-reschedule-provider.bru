@@ -1,0 +1,16 @@
+meta {
+  name: Request Reschedule (Provider)
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/appointments/{{appointmentId}}/request-reschedule
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

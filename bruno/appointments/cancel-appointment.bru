@@ -1,0 +1,16 @@
+meta {
+  name: Cancel Appointment
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/appointments/{{appointmentId}}/cancel
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

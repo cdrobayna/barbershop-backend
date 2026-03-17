@@ -1,0 +1,27 @@
+meta {
+  name: Update Provider Profile
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/v1/provider/profile
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Provider Updated",
+    "bio": "Especialista en cortes modernos.",
+    "photo_url": "https://example.com/provider.jpg",
+    "appointment_duration_minutes": 30,
+    "min_cancel_notice_hours": 2
+  }
+}

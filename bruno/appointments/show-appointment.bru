@@ -1,0 +1,16 @@
+meta {
+  name: Show Appointment
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/appointments/{{appointmentId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

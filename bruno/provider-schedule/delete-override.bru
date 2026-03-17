@@ -1,0 +1,16 @@
+meta {
+  name: Delete Override
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/schedule/overrides/{{overrideId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

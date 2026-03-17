@@ -1,0 +1,35 @@
+meta {
+  name: Update Notification Preferences
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/v1/profile/notification-preferences
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "preferences": [
+      {
+        "event_type": "appointment_confirmed",
+        "channel": "mail",
+        "enabled": false
+      },
+      {
+        "event_type": "appointment_created",
+        "channel": "database",
+        "enabled": true
+      }
+    ],
+    "reminder_lead_time_hours": 48
+  }
+}

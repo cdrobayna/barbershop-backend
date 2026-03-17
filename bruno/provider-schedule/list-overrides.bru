@@ -1,0 +1,16 @@
+meta {
+  name: List Overrides
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/schedule/overrides
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}

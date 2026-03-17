@@ -1,0 +1,26 @@
+meta {
+  name: Store Appointment (Client)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/appointments
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "provider_id": {{providerId}},
+    "scheduled_at": "2030-01-20T10:00:00-05:00",
+    "party_size": 2,
+    "notes": "Padre con dos hijos"
+  }
+}
